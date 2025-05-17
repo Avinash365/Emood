@@ -7,7 +7,7 @@ function Navbar(){
                 <img src={image} alt="Logo" className="h-6" />
                 <p className="text-black">Moodsense</p> 
            </div>
-        
+    
            <button className="px-4 py-2 bg-[#F0F2F5] rounded-2x cursor-pointer hover:bg-[#E5E8EB]">Sign in</button>
         </div>
     )
