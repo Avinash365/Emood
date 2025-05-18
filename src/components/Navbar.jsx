@@ -1,10 +1,10 @@
-import image from '../assets/image.png' // relative import
+import navImage from '../assets/navImage.png' // relative import
 
 function Navbar(){
     return (
         <div className="text-black flex justify-between font-bold px-10 py-4 border-b-1 border-[#E5E8EB]">
            <div className='flex gap-2 justify-center items-center'> 
-                <img src={image} alt="Logo" className="h-6" />
+                <img src={navImage} alt="Logo" className="h-6" />
                 <p className="text-black">Moodsense</p> 
            </div>
     

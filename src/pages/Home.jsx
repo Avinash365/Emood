@@ -1,12 +1,16 @@
-import Navbar from "../components/Navbar.jsx" 
+import Navbar from "../components/Navbar.jsx"
 import WelcomeSection from "../components/Home/WelcomeSection.jsx";
+import Mood from "../components/Home/Mood.jsx";
 
-function Home(){
+
+function Home() {
     return (
         <div>
-            <Navbar/>
-            <WelcomeSection/>
+            <Navbar />
+            <WelcomeSection />
+            <Mood />
         </div>
     )
-} 
+}
+
 export default Home; 
