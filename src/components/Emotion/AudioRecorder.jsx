@@ -1,41 +1,57 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import Recorder from 'recorder-js';
+import useAudioPrediction from '../../hooks/useAudioPrediction';
 
-function AudioRecorder() {
+const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
+  const [audioBlob, setAudioBlob] = useState(null);
   const [seconds, setSeconds] = useState(0);
+
   const intervalRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const audioContextRef = useRef(new (window.AudioContext || window.webkitAudioContext)());
+  const recorderRef = useRef(null);
+  const streamRef = useRef(null);
+
+  const { prediction, predict } = useAudioPrediction();
 
   const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    audioChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      audioChunksRef.current.push(e.data);
-    };
+      const recorder = new Recorder(audioContextRef.current, {
+        onAnalysed: null,
+      });
 
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-      const url = URL.createObjectURL(blob);
-      setAudioURL(url);
-    };
+      await recorder.init(stream);
+      recorderRef.current = recorder;
 
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-    setSeconds(0);
-
-    intervalRef.current = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
+      await recorder.start();
+      setIsRecording(true);
+      setSeconds(0);
+      intervalRef.current = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+    }
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current.stop();
-    setIsRecording(false);
-    clearInterval(intervalRef.current);
+  const stopRecording = async () => {
+    try {
+      const { blob } = await recorderRef.current.stop();
+      const url = URL.createObjectURL(blob);
+      setAudioURL(url);
+      setAudioBlob(blob);
+      setIsRecording(false);
+      clearInterval(intervalRef.current);
+
+      // Clean up stream
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+    }
   };
 
   const formatTime = (sec) => {
@@ -43,10 +59,6 @@ function AudioRecorder() {
     const seconds = String(sec % 60).padStart(2, '0');
     return `${minutes}:${seconds}`;
   };
-
-  useEffect(() => {
-    return () => clearInterval(intervalRef.current); // Cleanup on unmount
-  }, []);
 
   return (
     <div className="text-center mt-10">
@@ -57,7 +69,6 @@ function AudioRecorder() {
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
 
-      {/* Visual indicator + timer */}
       {isRecording && (
         <div className="flex justify-center items-center gap-3 mt-4 text-red-600 font-bold animate-pulse">
           <div className="w-3 h-3 bg-red-600 rounded-full animate-ping"></div>
@@ -66,15 +77,26 @@ function AudioRecorder() {
         </div>
       )}
 
-      {/* Playback after recording */}
       {audioURL && !isRecording && (
         <div className="mt-6">
-          <audio src={audioURL} controls />
+          <audio src={audioURL} controls  className='mx-auto'/>
           <p className="mt-2 text-gray-600">Duration: {formatTime(seconds)}</p>
+          <button
+            onClick={() => predict(audioBlob)}
+            className="mt-4 bg-green-600 text-white px-4 py-2 rounded-xl"
+          >
+            Predict
+          </button>
+
+          {prediction && (
+            <p className="mt-4 text-lg font-semibold text-purple-700">
+              Prediction: {prediction}
+            </p>
+          )}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default AudioRecorder;
