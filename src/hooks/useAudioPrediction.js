@@ -6,6 +6,7 @@ const useAudioPrediction = () => {
   const predict = async (audioFile) => {
     if (!audioFile) return;
 
+
     const formData = new FormData();
     formData.append('file', audioFile, 'audioBlob.wav');
 

@@ -1,26 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Recorder from 'recorder-js';
 import useAudioPrediction from '../../hooks/useAudioPrediction';
+import ProgressBar from './ProgressBar';
+import { useNavigate } from 'react-router-dom'; // 🚀 import this
 
 const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
   const [seconds, setSeconds] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const intervalRef = useRef(null);
-  const audioContextRef = useRef(new (window.AudioContext || window.webkitAudioContext)());
+  const audioContextRef = useRef(null);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
 
   const { prediction, predict } = useAudioPrediction();
+  const navigate = useNavigate(); // 🚀 for routing
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const recorder = new Recorder(audioContextRef.current, {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
+
+      const recorder = new Recorder(audioContext, {
         onAnalysed: null,
       });
 
@@ -41,17 +49,45 @@ const AudioRecorder = () => {
   const stopRecording = async () => {
     try {
       const { blob } = await recorderRef.current.stop();
+
+      if (audioURL) URL.revokeObjectURL(audioURL);
+
       const url = URL.createObjectURL(blob);
       setAudioURL(url);
       setAudioBlob(blob);
       setIsRecording(false);
       clearInterval(intervalRef.current);
 
-      // Clean up stream
       streamRef.current.getTracks().forEach((track) => track.stop());
     } catch (error) {
       console.error('Failed to stop recording:', error);
     }
+  };
+
+  const handlePrediction = async () => {
+    setLoading(true);
+    setProgress(10);
+
+    await new Promise((res) => setTimeout(res, 300));
+    setProgress(30);
+
+    await new Promise((res) => setTimeout(res, 400));
+    setProgress(60);
+
+    // Simulate processing time before the API call
+    await new Promise((res) => setTimeout(res, 300));
+    setProgress(75);
+
+    await predict(audioBlob); // This does the actual prediction call
+    setProgress(90);
+
+    // Simulate finalization
+    await new Promise((res) => setTimeout(res, 300));
+    setProgress(100);
+
+    // Give user a moment to see 100% before removing the bar
+    await new Promise((res) => setTimeout(res, 500));
+    setLoading(false); 
   };
 
   const formatTime = (sec) => {
@@ -60,8 +96,26 @@ const AudioRecorder = () => {
     return `${minutes}:${seconds}`;
   };
 
+  useEffect(() => {
+    if (prediction && !loading) {
+      const timer = setTimeout(() => {
+        navigate('/output', { state: { prediction } }); 
+      }, 1000); 
+      return () => clearTimeout(timer);
+    }
+  }, [prediction, loading, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (audioURL) URL.revokeObjectURL(audioURL);
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') audioContextRef.current.close();
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
+    };
+  }, [audioURL]);
+
   return (
-    <div className="text-center mt-10">
+    <div className="text-center mt-10 text-white">
       <button
         onClick={isRecording ? stopRecording : startRecording}
         className="bg-blue-600 text-white px-4 py-2 rounded-xl mt-2"
@@ -79,20 +133,18 @@ const AudioRecorder = () => {
 
       {audioURL && !isRecording && (
         <div className="mt-6">
-          <audio src={audioURL} controls  className='mx-auto'/>
-          <p className="mt-2 text-gray-600">Duration: {formatTime(seconds)}</p>
+          <audio src={audioURL} controls className="mx-auto" />
+          <p className="mt-2 text-gray-300">Duration: {formatTime(seconds)}</p>
           <button
-            onClick={() => predict(audioBlob)}
+            onClick={handlePrediction}
             className="mt-4 bg-green-600 text-white px-4 py-2 rounded-xl"
+            disabled={loading}
           >
-            Predict
+            {loading ? 'Predicting...' : 'Predict'}
           </button>
-
-          {prediction && (
-            <p className="mt-4 text-lg font-semibold text-purple-700">
-              Prediction: {prediction}
-            </p>
-          )}
+          <div className=" mt-4 flex justify-center">
+            {loading && <ProgressBar progress={progress} />}
+          </div>
         </div>
       )}
     </div>
