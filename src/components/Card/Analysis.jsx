@@ -1,27 +1,37 @@
 import { ImHappy } from "react-icons/im";
+import { useContext } from "react";
+import { OutputContext } from "../../context/OutputContext";
 
 
 
-const Analysis = ({ prediction }) => {
 
+
+const Analysis = () => {
     
   return (
     <div className="flex gap-2 flex-wrap justify-center md:justify-between">
-      <Mood mood="neutral" prediction={prediction} />
-      <Mood mood="calm" prediction={prediction} />
-      <Mood mood="happy" prediction={prediction} />
-      <Mood mood="sad" prediction={prediction} />
-      <Mood mood="angry" prediction={prediction} />
-      <Mood mood="fearful" prediction={prediction} />
-      <Mood mood="disgust" prediction={prediction} />
-      <Mood mood="surprised" prediction={prediction}/>
+      <Mood mood="neutral"  />
+      <Mood mood="calm"  />
+      <Mood mood="happy"  />
+      <Mood mood="sad"  />
+      <Mood mood="angry"  />
+      <Mood mood="fearful"  />
+      <Mood mood="disgust"  />
+      <Mood mood="surprised" />
     </div>
   );
 };
 
 
-const Mood = ({ mood, prediction }) => {
-  const isActive = mood.toLowerCase() === prediction?.toLowerCase();
+const Mood = ({ mood }) => {
+
+  const prediction = useContext(OutputContext);
+  const isActive = mood.toLowerCase() === prediction.emotion.toLowerCase();
+
+  const probability = prediction.emotion_probabilities[mood.toLowerCase()] || 0;
+  const emotion_probabilitie = (probability * 100).toFixed(2);
+
+  console.log(prediction);
 
   return (
     <div
@@ -30,11 +40,10 @@ const Mood = ({ mood, prediction }) => {
         ${isActive ? 'scale-105 border-blue-400 text-blue-400' : 'hover:scale-105 bg-[#F7FAFA] border-[#D1DBE5]'}`}
     >
       <ImHappy className={isActive ? "text-blue-600" : "text-black"} />
-      <p className="font-bold">{mood}</p>
-      <p>20%</p>
+      <p className="font-bold capitalize">{mood}</p>
+      <p>{emotion_probabilitie}%</p>
     </div>
   );
 };
 
-
-export default Analysis; 
+export default Analysis;

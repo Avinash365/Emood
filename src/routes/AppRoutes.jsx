@@ -5,6 +5,7 @@ import Home from "../pages/Home.jsx";
 import Emotion from "../pages/Emotion.jsx";
 import Output from '../pages/Output.jsx';
 
+
 function AppRoutes() {
     return (
         <Router>
