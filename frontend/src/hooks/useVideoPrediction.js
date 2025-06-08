@@ -10,7 +10,7 @@ const useVideoPrediction = () => {
     formData.append('file', videoFile, 'videoBlob.webm'); // ✅ correct file type & name
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/predict/video', {
+      const response = await fetch('https://backend-atke.onrender.com/predict/video', {
         method: 'POST',
         body: formData,
       });
