@@ -1,8 +1,11 @@
 fastapi
 uvicorn
-librosa
 numpy
+opencv-python
+librosa
+moviepy
 tensorflow
-python-pip
-resampy
-pydub  
+python-multipart
+aiofiles
+scipy
+pydub
