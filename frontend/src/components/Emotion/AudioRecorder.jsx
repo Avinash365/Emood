@@ -4,6 +4,8 @@ import useAudioPrediction from '../../hooks/useAudioPrediction';
 import ProgressBar from './ProgressBar';
 import { useNavigate } from 'react-router-dom'; // 🚀 import this
 
+import { AiFillAudio } from "react-icons/ai";
+
 const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
@@ -118,8 +120,9 @@ const AudioRecorder = () => {
     <div className="text-center mt-10 text-white">
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className="bg-blue-600 text-white px-4 py-2 rounded-xl mt-2"
+        className="bg-blue-600 text-white px-4 py-2 rounded-xl mt-2 "
       >
+        <AiFillAudio className='mx-auto'/>
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
 
