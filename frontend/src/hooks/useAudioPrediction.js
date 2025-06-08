@@ -11,7 +11,7 @@ const useAudioPrediction = () => {
     formData.append('file', audioFile, 'audioBlob.wav');
 
     try {
-      const response = await fetch('https://backend-atke.onrender.com/predict/audio', {
+      const response = await fetch('https://backend-dprb.onrender.com/predict/audio', {
         method: 'POST',
         body: formData,
       });
