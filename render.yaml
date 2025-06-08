@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: web 
     name: backend
     env: python
     buildCommand: pip install -r backend/requirements.txt
@@ -13,6 +13,5 @@ services:
     env: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
-    plan: free
     autoDeploy: true
     rootDir: frontend
