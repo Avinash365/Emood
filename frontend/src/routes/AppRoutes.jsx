@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from "../pages/Home.jsx";
 import Emotion from "../pages/Emotion.jsx";
 import Output from '../pages/Output.jsx';
+import UploadVideo from '../components/Emotion/UploadVideo.jsx';
 
 
 function AppRoutes() {

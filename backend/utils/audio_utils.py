@@ -4,6 +4,8 @@ import io
 from moviepy import VideoFileClip
 import tempfile
 import os
+import subprocess
+
 
 
 def extract_audio_features(audio_bytes):
@@ -34,19 +36,55 @@ def extract_audio_features(audio_bytes):
 
 
 
+# def extract_audio_bytes_from_video(video_path):
+#     clip = VideoFileClip(video_path)
+#     try:
+#         audio = clip.audio
+#         if audio is None:
+#             return None
+#         temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+#         temp_audio_path = temp_audio_file.name
+#         temp_audio_file.close()
+#         audio.write_audiofile(temp_audio_path, fps=22050, codec='pcm_s16le',  logger=None)
+#         with open(temp_audio_path, 'rb') as f:
+#             audio_bytes = f.read()
+#         os.remove(temp_audio_path)
+#         return audio_bytes
+#     finally:
+#         clip.close()
+
+
 def extract_audio_bytes_from_video(video_path):
-    clip = VideoFileClip(video_path)
+    # Create temp file path for extracted WAV audio
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
+        audio_path = temp_audio_file.name
+
     try:
-        audio = clip.audio
-        if audio is None:
+        command = [
+            "ffmpeg",
+            "-y",  # Overwrite output
+            "-i", video_path,
+            "-vn",  # No video
+            "-acodec", "pcm_s16le",
+            "-ar", "22050",  # Sample rate
+            "-ac", "1",  # Mono
+            audio_path
+        ]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if result.returncode != 0:
+            print("❌ ffmpeg error:\n", result.stderr.decode())
             return None
-        temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-        temp_audio_path = temp_audio_file.name
-        temp_audio_file.close()
-        audio.write_audiofile(temp_audio_path, fps=22050, codec='pcm_s16le', verbose=False, logger=None)
-        with open(temp_audio_path, 'rb') as f:
+
+        with open(audio_path, "rb") as f:
             audio_bytes = f.read()
-        os.remove(temp_audio_path)
+
         return audio_bytes
+
+    except Exception as e:
+        print("❌ Failed to extract audio:", str(e))
+        return None
+
     finally:
-        clip.close()
+        if os.path.exists(audio_path):
+            os.remove(audio_path)

@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar.jsx"
 import AudioRecorder from "../components/Emotion/AudioRecorder.jsx";
 import VideoRecorder from "../components/Emotion/VideoRecorder.jsx"; 
+import UploadVideo from "../components/Emotion/UploadVideo.jsx";
 
 function Emotion() {
     return (
@@ -8,7 +9,11 @@ function Emotion() {
             <Navbar />
             <MoodCapture/>
             <AudioRecorder/>
-            <VideoRecorder />
+            <div className="grid md:grid-cols-2 justify-around ">
+            <UploadVideo/>
+
+            <VideoRecorder />   
+            </div>
         </div>
     )
 } 

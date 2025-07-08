@@ -21,6 +21,7 @@ const VideoRecorder = () => {
   const intervalRef = useRef(null);
 
   const { prediction, predict } = useVideoPrediction();
+  
   const navigate = useNavigate();
 
   const startRecording = async () => {
@@ -120,7 +121,7 @@ const VideoRecorder = () => {
   }, [videoURL]);
 
   return (
-    <div className="text-center mt-8 text-white">
+    <div className="text-center mt-8 text-white ">
       <h1 className="text-xl font-bold mb-4">Video Recorder</h1>
 
       {/* Start / Stop Button */}
