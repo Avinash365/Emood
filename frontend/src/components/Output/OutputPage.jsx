@@ -28,7 +28,9 @@ const OutputPage = () => {
   const weight = moodWeights[emotion] || 5;
 
   // Calculate mood score scaled 0-10, rounded to 1 decimal place
-  const moodScore = (weight * probability).toFixed(1);
+  // const moodScore = (weight * probability).toFixed(1);
+  const moodScore = weight; 
+
 
   const handleClick = () => {
     navigate("/emotion");

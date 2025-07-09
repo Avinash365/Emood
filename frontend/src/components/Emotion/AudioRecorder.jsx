@@ -89,7 +89,7 @@ const AudioRecorder = () => {
 
     // Give user a moment to see 100% before removing the bar
     await new Promise((res) => setTimeout(res, 500));
-    setLoading(false); 
+    setLoading(false);
   };
 
   const formatTime = (sec) => {
@@ -101,8 +101,8 @@ const AudioRecorder = () => {
   useEffect(() => {
     if (prediction && !loading) {
       const timer = setTimeout(() => {
-        navigate('/output', { state: { prediction } }); 
-      }, 1000); 
+        navigate('/output', { state: { prediction } });
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [prediction, loading, navigate]);
@@ -122,8 +122,11 @@ const AudioRecorder = () => {
         onClick={isRecording ? stopRecording : startRecording}
         className="bg-blue-600 text-white px-4 py-2 rounded-xl mt-2 "
       >
-        <AiFillAudio className='mx-auto'/>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        <div className='flex gap-2 py-1 px-2 justify-center items-center'>
+          <AiFillAudio className='mx-auto' />
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </div>
+
       </button>
 
       {isRecording && (

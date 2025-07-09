@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ Import navigate
 import ProgressBar from './ProgressBar';
+import useVideoPrediction from '../../hooks/useVideoPrediction';
 
 const UploadVideo = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [videoURL, setVideoURL] = useState('');
-    const [videoBlob, setVideoBlob] = useState(null);
-    const [seconds, setSeconds] = useState(0);
-    const [progress, setProgress] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-  
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const { prediction, predict } = useVideoPrediction();
+  const navigate = useNavigate(); // ✅ Hook to navigate
 
   const handleVideoChange = (e) => {
     const file = e.target.files[0];
@@ -23,62 +22,38 @@ const UploadVideo = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handlePrediction = async () => {
     if (!videoFile) {
-      alert('No video file selected');
+      alert('No video selected');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('video', videoFile);
-
-    // Example upload endpoint
-    setIsRecording(true)
-    
-    fetch('/upload', {
-      method: 'POST',
-      body: formData,
-    })
-      .then((res) => {
-        if (res.ok) {
-          alert('Video uploaded successfully!');
-        } else {
-          alert('Failed to upload video.');
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        alert('Error uploading video.');
-      });
-  };
-
-   const handlePrediction = async () => {
     setLoading(true);
     setProgress(10);
 
     await new Promise((res) => setTimeout(res, 300));
     setProgress(30);
-
     await new Promise((res) => setTimeout(res, 400));
     setProgress(60);
-
     await new Promise((res) => setTimeout(res, 300));
     setProgress(75);
 
-    await predict(videoBlob);
-    setProgress(90);
+    await predict(videoFile);
 
-    await new Promise((res) => setTimeout(res, 300));
     setProgress(100);
-
     await new Promise((res) => setTimeout(res, 500));
     setLoading(false);
   };
 
-  return (
-    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-md mt-10">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Upload a Video</h2>
+  // ✅ Navigate after prediction is available
+  useEffect(() => {
+    if (prediction && !loading) {
+      navigate('/output', { state: { prediction } });
+    }
+  }, [prediction, loading, navigate]);
 
+  return (
+    <div className="p-6 mt-10 max-w-[500px]">
       <input
         type="file"
         accept="video/*"
@@ -87,47 +62,36 @@ const UploadVideo = () => {
                    file:rounded-md file:border-0 file:text-sm file:font-semibold
                    file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
       />
-     
 
       {videoPreview && (
-        <div className="mb-4">
-          <video className="w-full rounded" controls>
+        <div className="mb-6 flex justify-center">
+          <video
+            className="min-[400px] max-w-[400px] aspect-video rounded shadow-md"
+            controls
+          >
             <source src={videoPreview} type={videoFile.type} />
             Your browser does not support the video tag.
           </video>
         </div>
       )}
 
-<div className='flex justify-center item-center gap-4'>
-  <div>
-
-      <button
-        onClick={handleUpload}
-        className="bg-blue-600  text-white px-2 py-3 text-sm rounded hover:bg-blue-700 transition"
-      >
-        Upload
-      </button>
-  </div>
-
-       {isRecording && (
-        <div className=" flex-1">
+      {videoFile && (
+        <div className="flex flex-col items-center gap-4">
           <button
             onClick={handlePrediction}
-            className="bg-blue-600 px-4 py-2 rounded-xl"
+            className="bg-blue-600 px-6 py-2 text-white rounded-2xl hover:bg-green-500"
             disabled={loading}
           >
             {loading ? 'Predicting...' : 'Predict'}
           </button>
-
-          {loading && (
-            <div className="mt-4 flex justify-center">
-              <ProgressBar progress={progress} />
-            </div>
-          )}
         </div>
       )}
-</div>
 
+      {loading && (
+        <div className="w-[350px] flex justify-center mt-10">
+          <ProgressBar progress={progress} />
+        </div>
+      )}
     </div>
   );
 };

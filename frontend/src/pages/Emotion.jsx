@@ -1,22 +1,21 @@
 import Navbar from "../components/Navbar.jsx"
 import AudioRecorder from "../components/Emotion/AudioRecorder.jsx";
-import VideoRecorder from "../components/Emotion/VideoRecorder.jsx"; 
+import VideoRecorder from "../components/Emotion/VideoRecorder.jsx";
 import UploadVideo from "../components/Emotion/UploadVideo.jsx";
 
 function Emotion() {
     return (
         <div>
             <Navbar />
-            <MoodCapture/>
-            <AudioRecorder/>
-            <div className="grid md:grid-cols-2 justify-around ">
-            <UploadVideo/>
-
-            <VideoRecorder />   
+            <MoodCapture />
+            <div className="flex justify-center gap-2 ">
+                <AudioRecorder />
+                <UploadVideo />
             </div>
+            <VideoRecorder />
         </div>
     )
-} 
+}
 
 
 function MoodCapture() {

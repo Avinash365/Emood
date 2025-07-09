@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import useVideoPrediction from '../../hooks/useVideoPrediction';
 import ProgressBar from './ProgressBar';
 import { useNavigate } from 'react-router-dom';
-
 import { MdOutlineVideoLibrary } from "react-icons/md";
 
 const VideoRecorder = () => {
@@ -21,15 +20,31 @@ const VideoRecorder = () => {
   const intervalRef = useRef(null);
 
   const { prediction, predict } = useVideoPrediction();
-  
   const navigate = useNavigate();
 
   const startRecording = async () => {
     try {
       setError('');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+        audio: true,
+      });
+
       streamRef.current = stream;
-      videoPreviewRef.current.srcObject = stream;
+      setIsRecording(true); // Ensure video element is rendered
+
+      // Give a moment to render <video>, then assign stream
+      setTimeout(() => {
+        if (videoPreviewRef.current) {
+          videoPreviewRef.current.srcObject = stream;
+          videoPreviewRef.current.muted = true;
+          videoPreviewRef.current.playsInline = true;
+          videoPreviewRef.current
+            .play()
+            .catch((err) => console.warn('Autoplay error:', err));
+        }
+      }, 100);
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -44,12 +59,11 @@ const VideoRecorder = () => {
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
-        setVideoURL(url);
         setVideoBlob(blob);
+        setVideoURL(url);
       };
 
       mediaRecorder.start();
-      setIsRecording(true);
       setSeconds(0);
 
       intervalRef.current = setInterval(() => {
@@ -57,7 +71,16 @@ const VideoRecorder = () => {
       }, 1000);
     } catch (err) {
       console.error('Failed to start recording:', err);
-      setError('Could not access camera or microphone.');
+
+      if (err.name === 'NotAllowedError') {
+        setError('Permission denied. Please allow access to camera and microphone.');
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera/microphone found.');
+      } else if (err.name === 'NotReadableError') {
+        setError('Camera or microphone is already in use.');
+      } else {
+        setError('Could not access camera or microphone.');
+      }
     }
   };
 
@@ -70,30 +93,29 @@ const VideoRecorder = () => {
       streamRef.current.getTracks().forEach((track) => track.stop());
     }
 
-    setIsRecording(false);
     clearInterval(intervalRef.current);
+    setIsRecording(false);
   };
 
   const handlePrediction = async () => {
+    if (!videoBlob) return;
+
     setLoading(true);
     setProgress(10);
 
     await new Promise((res) => setTimeout(res, 300));
     setProgress(30);
-
     await new Promise((res) => setTimeout(res, 400));
     setProgress(60);
-
     await new Promise((res) => setTimeout(res, 300));
     setProgress(75);
 
     await predict(videoBlob);
     setProgress(90);
-
     await new Promise((res) => setTimeout(res, 300));
     setProgress(100);
-
     await new Promise((res) => setTimeout(res, 500));
+
     setLoading(false);
   };
 
@@ -121,30 +143,32 @@ const VideoRecorder = () => {
   }, [videoURL]);
 
   return (
-    <div className="text-center mt-8 text-white ">
-      <h1 className="text-xl font-bold mb-4">Video Recorder</h1>
+    <div className="text-center mt-8 text-white px-4">
+      <h1 className="text-xl font-bold mb-4">🎥 Video Emotion Recorder</h1>
 
-      {/* Start / Stop Button */}
+      {/* Start/Stop Button */}
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className={`px-4 py-2 rounded-xl text-white ${isRecording ? 'bg-red-600' : 'bg-green-600'}`}
+        className={`px-6 py-3 rounded-xl text-white font-semibold shadow-md ${
+          isRecording ? 'bg-red-600' : 'bg-green-600'
+        }`}
       >
-        <MdOutlineVideoLibrary className='mx-auto'/>
+        <MdOutlineVideoLibrary className="inline-block mr-2 text-xl" />
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
 
       {/* Error */}
       {error && <p className="text-red-500 mt-4">{error}</p>}
 
-      {/* Predict Button AFTER Stop */}
+      {/* Predict Button */}
       {!isRecording && videoBlob && (
-        <div className="mt-4">
+        <div className="mt-6">
           <button
             onClick={handlePrediction}
-            className="bg-blue-600 px-4 py-2 rounded-xl"
             disabled={loading}
+            className="bg-blue-600 px-6 py-3 rounded-xl text-white font-medium hover:bg-blue-700 transition"
           >
-            {loading ? 'Predicting...' : 'Predict'}
+            {loading ? 'Predicting...' : 'Predict Emotion'}
           </button>
 
           {loading && (
@@ -156,28 +180,34 @@ const VideoRecorder = () => {
       )}
 
       {/* Live Preview */}
-      <div className="mt-6">
-        <video
-          ref={videoPreviewRef}
-          autoPlay
-          muted={isRecording}
-          controls={!isRecording}
-          className="mx-auto w-full max-w-lg border rounded-lg"
-        />
-      </div>
+      {isRecording && (
+        <div className="mt-6">
+          <video
+            ref={videoPreviewRef}
+            autoPlay
+            playsInline
+            muted
+            className="mx-auto w-full max-w-lg aspect-video border rounded-lg shadow"
+          />
+        </div>
+      )}
 
       {/* Timer */}
       {isRecording && (
-        <div className="mt-4 text-red-600 font-bold flex justify-center items-center gap-2">
-          <span className="w-3 h-3 bg-red-600 rounded-full animate-ping" />
+        <div className="mt-4 text-red-500 font-bold flex justify-center items-center gap-2">
+          <span className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
           <span>Recording... {formatTime(seconds)}</span>
         </div>
       )}
 
-      {/* Playback Video + Duration */}
+      {/* Playback */}
       {!isRecording && videoURL && (
         <div className="mt-6">
-          <video src={videoURL} controls className="mx-auto w-full max-w-lg rounded-lg border" />
+          <video
+            src={videoURL}
+            controls
+            className="mx-auto w-full max-w-lg aspect-video rounded-lg border shadow"
+          />
           <p className="text-gray-300 mt-2">Duration: {formatTime(seconds)}</p>
         </div>
       )}
